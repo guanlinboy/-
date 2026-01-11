@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>员工工时管理系统</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #f5f5f5;
+}
+
+.app {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* 侧边导航 */
+.sidebar {
+    width: 220px;
+    background: #304156;
+    color: #fff;
+    padding: 20px 0;
+}
+
+.sidebar h1 {
+    font-size: 18px;
+    text-align: center;
+    padding: 0 20px 20px;
+    border-bottom: 1px solid #434a58;
+    margin-bottom: 10px;
+}
+
+.nav-menu {
+    list-style: none;
+}
+
+.nav-menu li {
+    margin: 5px 0;
+}
+
+.nav-link {
+    display: block;
+    padding: 12px 24px;
+    color: #bfcbd9;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.nav-link:hover {
+    background: #263445;
+    color: #fff;
+}
+
+.nav-link.active {
+    background: #409eff;
+    color: #fff;
+}
+
+/* 主内容区 */
+.main-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background: #fff;
+    padding: 16px 20px;
+    border-radius: 4px;
+}
+
+.page-header h2 {
+    font-size: 20px;
+    color: #303133;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* 表格 */
+.table-container {
+    background: #fff;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: #f5f7fa;
+}
+
+th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 500;
+    color: #606266;
+    border-bottom: 1px solid #ebeef5;
+}
+
+td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #ebeef5;
+    color: #606266;
+}
+
+tbody tr:hover {
+    background: #f5f7fa;
+}
+
+/* 日历表格 */
+.month-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-select-sm {
+    padding: 4px 8px;
+    font-size: 14px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.calendar-table-container {
+    background: #fff;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+
+#worktimes-calendar-table {
+    min-width: 100%;
+    border-collapse: collapse;
+}
+
+#worktimes-calendar-table th,
+#worktimes-calendar-table td {
+    min-width: 45px;
+    text-align: center;
+    border: 1px solid #dcdfe6;
+    padding: 8px 4px;
+    font-size: 13px;
+}
+
+#worktimes-calendar-table th {
+    background: #e8f4fd;
+    font-weight: 700;
+    color: #1a5f3e;
+    font-size: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 2px solid #409eff;
+}
+
+#worktimes-calendar-table td {
+    background: #fff;
+    color: #303133;
+    border-color: #ebeef5;
+}
+
+#worktimes-calendar-table th:first-child,
+#worktimes-calendar-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: #fff;
+    z-index: 20;
+    min-width: 100px;
+    text-align: left;
+    padding-left: 12px;
+    font-weight: 600;
+}
+
+#worktimes-calendar-table th:first-child {
+    background: #d9ecff;
+    z-index: 30;
+    color: #0056b3;
+}
+
+/* 周末高亮 */
+#worktimes-calendar-table th.weekend,
+#worktimes-calendar-table td.weekend {
+    background: #fff1f0;
+}
+
+#worktimes-calendar-table th.weekend {
+    background: #ffccc7;
+}
+
+/* 可点击单元格 */
+.calendar-cell {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.calendar-cell:hover {
+    background: #ecf5ff;
+}
+
+.calendar-cell.has-data {
+    background: #f0f9ff;
+    font-weight: 500;
+    color: #409eff;
+    position: relative;
+}
+
+/* 备注标记 - 红点 */
+.calendar-cell .note-marker {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    background: #ff4d4f;
+    border-radius: 50%;
+    box-shadow: 0 0 2px rgba(255, 77, 79, 0.5);
+}
+
+/* 有备注的单元格边框高亮 */
+.calendar-cell.has-note {
+    border: 1px solid #ff7875 !important;
+}
+
+/* 周末 + 备注 */
+.calendar-cell.has-note.weekend {
+    border: 1px solid #ffa39e !important;
+}
+
+/* 有备注的单元格悬停效果 */
+.calendar-cell.has-note:hover {
+    background: #fff1f0 !important;
+}
+
+/* 总计列 */
+.total-cell {
+    background: #f5f7fa !important;
+    font-weight: 600;
+    color: #303133;
+    position: sticky;
+    right: 0;
+    z-index: 5;
+    border-left: 2px solid #dcdfe6 !important;
+}
+
+#worktimes-calendar-table th.total-header {
+    position: sticky;
+    right: 0;
+    z-index: 35;
+    background: #e8f4ff !important;
+    border-left: 2px solid #dcdfe6 !important;
+}
+
+/* 按钮 */
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: #409eff;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: #66b1ff;
+}
+
+.btn-secondary {
+    background: #fff;
+    border: 1px solid #dcdfe6;
+    color: #606266;
+}
+
+.btn-secondary:hover {
+    border-color: #c6e2ff;
+    background: #ecf5ff;
+    color: #409eff;
+}
+
+.btn-danger {
+    background: #f56c6c;
+    color: #fff;
+}
+
+.btn-danger:hover {
+    background: #f78989;
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: #409eff;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.btn-link:hover {
+    color: #66b1ff;
+}
+
+/* 表单 */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #606266;
+    font-size: 14px;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: #409eff;
+}
+
+.form-textarea {
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* 弹窗 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 4px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #ebeef5;
+}
+
+.modal-header h3 {
+    font-size: 16px;
+    color: #303133;
+}
+
+.close {
+    font-size: 24px;
+    color: #909399;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close:hover {
+    color: #303133;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid #ebeef5;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-sm {
+    max-width: 400px;
+}
+
+.cell-info {
+    background: #f0f7ff;
+    border-left: 3px solid #409eff;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: #303133;
+}
+
+/* 批量录入样式 */
+.section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.form-section {
+    background: #fafafa;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.section-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 12px;
+    display: block;
+}
+
+/* 日期区域 - 蓝色 */
+.date-section {
+    background: #f0f7ff;
+    border-color: #b3d8ff;
+}
+
+.date-section .section-label {
+    color: #0056b3;
+}
+
+/* 工时区域 - 绿色 */
+.hours-section {
+    background: #f0f9f4;
+    border-color: #b3e0cc;
+}
+
+.hours-section .section-label {
+    color: #2e7d32;
+}
+
+/* 定时区域 - 紫色 */
+.schedule-section {
+    background: #f5f0ff;
+    border-color: #d4bfff;
+}
+
+.schedule-section .section-label {
+    color: #722ed1;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #303133;
+    margin-bottom: 8px;
+}
+
+.checkbox-label input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.schedule-inputs {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #d4bfff;
+}
+
+.schedule-inputs label {
+    display: block;
+    font-size: 13px;
+    color: #722ed1;
+    margin-bottom: 6px;
+}
+
+.schedule-inputs .form-input {
+    width: 100%;
+}
+
+.schedule-hint {
+    margin: 8px 0 0 0;
+    font-size: 12px;
+    color: #fa8c16;
+    background: #fff7e6;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.active-schedules {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #d4bfff;
+}
+
+.schedule-item {
+    background: #fff;
+    border: 1px solid #d4bfff;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.schedule-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.schedule-item-time {
+    font-weight: 600;
+    color: #722ed1;
+}
+
+.schedule-item-countdown {
+    color: #52c41a;
+    font-size: 12px;
+}
+
+.schedule-cancel {
+    background: #ff4d4f;
+    color: #fff;
+    border: none;
+    padding: 2px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.schedule-item-info {
+    color: #606266;
+    font-size: 12px;
+}
+
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 8px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.checkbox-item input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.checkbox-item label {
+    cursor: pointer;
+    margin: 0;
+}
+
+/* 全选/全不选按钮区域 */
+.checkbox-actions {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    border-bottom: 1px solid #dcdfe6;
+    background: #f5f7fa;
+}
+
+.checkbox-actions .btn-sm {
+    padding: 4px 12px;
+    font-size: 13px;
+}
+
+.date-range {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.date-range span {
+    color: #606266;
+    font-weight: 500;
+}
+
+.hours-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.hours-input-group .form-input {
+    flex: 1;
+}
+
+.hours-unit {
+    color: #2e7d32;
+    font-weight: 500;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.batch-info {
+    background: #fff7e6;
+    border: 1px solid #ffd591;
+    border-radius: 4px;
+    padding: 12px;
+    margin-top: 16px;
+}
+
+.batch-info p {
+    margin: 0;
+    color: #d46b08;
+    font-size: 14px;
+}
+
+.batch-info span {
+    font-weight: 600;
+}
+
+/* 筛选区 */
+.filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filters .form-input,
+.filters .form-select {
+    width: auto;
+    min-width: 150px;
+}
+
+/* 空状态 */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #909399;
+}
+
+/* 操作按钮组 */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+/* 数据管理区域 */
+.data-manager {
+    padding: 20px;
+    border-top: 1px solid #434a58;
+    margin-top: 20px;
+}
+
+.data-manager h3 {
+    font-size: 14px;
+    color: #bfcbd9;
+    margin-bottom: 12px;
+    padding-left: 4px;
+}
+
+.data-manager .btn {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.btn-success {
+    background: #67c23a;
+    color: #fff;
+}
+
+.btn-success:hover {
+    background: #85ce61;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+/* ==================== 移动端响应式设计 ==================== */
+
+@media (max-width: 768px) {
+    /* 整体布局调整 */
+    .app {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    /* 主内容区域 */
+    .main-content {
+        padding: 10px;
+        overflow: visible;
+        flex: 1;
+    }
+
+    /* 页面显示 */
+    .page {
+        display: none;
+    }
+
+    .page.active {
+        display: block;
+    }
+
+    /* 侧边栏改为顶部导航 */
+    .sidebar {
+        width: 100%;
+        padding: 10px 0;
+    }
+
+    .sidebar h1 {
+        font-size: 16px;
+        padding: 0 15px 10px;
+    }
+
+    .nav-menu {
+        display: flex;
+        overflow-x: auto;
+        padding: 0 10px;
+        gap: 0;
+    }
+
+    .nav-menu li {
+        margin: 0;
+        flex-shrink: 0;
+    }
+
+    .nav-link {
+        padding: 10px 15px;
+        white-space: nowrap;
+    }
+
+    /* 页面头部 */
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 12px 15px;
+    }
+
+    .page-header h2 {
+        font-size: 18px;
+        text-align: center;
+    }
+
+    /* 月份选择器 */
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .month-selector {
+        justify-content: center;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .form-select-sm {
+        flex: 1;
+        min-width: 80px;
+    }
+
+    /* 日历表格容器 */
+    .calendar-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+
+    #worktimes-calendar-table {
+        min-width: max-content;
+    }
+
+    /* 移动端禁用sticky定位 */
+    #worktimes-calendar-table th,
+    #worktimes-calendar-table td {
+        position: static !important;
+    }
+
+    #worktimes-calendar-table th,
+    #worktimes-calendar-table td {
+        min-width: 38px;
+        padding: 6px 2px;
+        font-size: 12px;
+    }
+
+    #worktimes-calendar-table th:first-child,
+    #worktimes-calendar-table td:first-child {
+        min-width: 70px;
+        padding-left: 8px;
+        font-size: 13px;
+    }
+
+    /* 备注红点适配 */
+    .calendar-cell .note-marker {
+        width: 5px;
+        height: 5px;
+        top: 1px;
+        right: 1px;
+    }
+
+    /* 弹窗适配 */
+    .modal-content {
+        width: 95%;
+        max-height: 85vh;
+    }
+
+    .modal-body {
+        padding: 15px;
+    }
+
+    .modal-footer {
+        padding: 12px 15px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .modal-footer .btn {
+        flex: 1;
+        min-width: 60px;
+        font-size: 13px;
+    }
+
+    /* 批量录入表单 */
+    .checkbox-group {
+        grid-template-columns: 1fr;
+        max-height: 120px;
+    }
+
+    .form-section {
+        padding: 12px;
+    }
+
+    .date-range {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .date-range span {
+        display: none;
+    }
+
+    .hours-input-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* 按钮适配 */
+    .btn {
+        padding: 10px 14px;
+        font-size: 14px;
+        touch-action: manipulation;
+    }
+
+    /* 表格容器 */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    th, td {
+        padding: 8px 6px;
+    }
+
+    /* 筛选区 */
+    .filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filters .form-input,
+    .filters .form-select {
+        width: 100%;
+        min-width: auto;
+    }
+
+    /* 数据管理区域 */
+    .data-manager {
+        padding: 15px;
+    }
+
+    /* 员工表格 */
+    #employees-table th:nth-child(4),
+    #employees-table td:nth-child(4) {
+        display: none;
+    }
+
+    #employees-table::after {
+        content: '→ 点击单元格编辑';
+        display: table-row;
+        text-align: center;
+        padding: 10px;
+        color: #909399;
+        font-size: 12px;
+    }
+}
+
+/* 超小屏幕适配 */
+@media (max-width: 480px) {
+    .sidebar h1 {
+        font-size: 14px;
+    }
+
+    .page-header h2 {
+        font-size: 16px;
+    }
+
+    /* 确保表格容器有高度 */
+    .calendar-table-container {
+        max-height: calc(100vh - 240px);
+    }
+
+    #worktimes-calendar-table th,
+    #worktimes-calendar-table td {
+        min-width: 32px;
+        font-size: 11px;
+        padding: 4px 1px;
+    }
+
+    #worktimes-calendar-table th:first-child,
+    #worktimes-calendar-table td:first-child {
+        min-width: 60px;
+        font-size: 12px;
+    }
+
+    .calendar-cell .note-marker {
+        width: 4px;
+        height: 4px;
+    }
+
+    /* 弹窗更小 */
+    .modal-content {
+        width: 98%;
+    }
+
+    .form-group label {
+        font-size: 13px;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+        font-size: 14px;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- 侧边导航 -->
+        <nav class="sidebar">
+            <h1>工时管理系统</h1>
+            <ul class="nav-menu">
+                <li>
+                    <a href="#employees" class="nav-link active" data-page="employees">
+                        员工管理
+                    </a>
+                </li>
+                <li>
+                    <a href="#worktimes" class="nav-link" data-page="worktimes">
+                        工时记录
+                    </a>
+                </li>
+                <li>
+                    <a href="#statistics" class="nav-link" data-page="statistics">
+                        统计报表
+                    </a>
+                </li>
+            </ul>
+
+            <!-- 数据管理 -->
+            <div class="data-manager">
+                <h3>数据管理</h3>
+                <button class="btn btn-success btn-block" onclick="exportData()">导出数据</button>
+                <button class="btn btn-secondary btn-block" onclick="document.getElementById('import-file').click()">导入数据</button>
+                <button class="btn btn-danger btn-block" onclick="clearData()">清除数据</button>
+                <input type="file" id="import-file" accept=".json" style="display: none" onchange="importData(event)">
+            </div>
+        </nav>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 员工管理页面 -->
+            <div id="page-employees" class="page active">
+                <div class="page-header">
+                    <h2>员工管理</h2>
+                    <button class="btn btn-primary" onclick="showEmployeeModal()">添加员工</button>
+                </div>
+
+                <div class="table-container">
+                    <table id="employees-table">
+                        <thead>
+                            <tr>
+                                <th>工号</th>
+                                <th>姓名</th>
+                                <th>部门</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 工时记录页面 -->
+            <div id="page-worktimes" class="page">
+                <div class="page-header">
+                    <h2>工时记录</h2>
+                    <div class="header-actions">
+                        <div class="month-selector">
+                            <button class="btn btn-sm" onclick="changeMonth(-1)">&lt;</button>
+                            <select id="year-select" class="form-select-sm" onchange="changeYear()"></select>
+                            <select id="month-select" class="form-select-sm" onchange="changeMonthSelect()"></select>
+                            <button class="btn btn-sm" onclick="changeMonth(1)">&gt;</button>
+                        </div>
+                        <button class="btn btn-success" onclick="showBatchModal()">批量录入</button>
+                    </div>
+                </div>
+
+                <div class="calendar-table-container">
+                    <table id="worktimes-calendar-table">
+                        <thead>
+                            <tr id="calendar-header"></tr>
+                        </thead>
+                        <tbody id="calendar-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 统计报表页面 -->
+            <div id="page-statistics" class="page">
+                <div class="page-header">
+                    <h2>统计报表</h2>
+                </div>
+
+                <div class="filters">
+                    <select id="stats-employee" class="form-select">
+                        <option value="">全部员工</option>
+                    </select>
+                    <input type="date" id="stats-start" class="form-input">
+                    <input type="date" id="stats-end" class="form-input">
+                    <select id="stats-sort" class="form-select">
+                        <option value="name_asc">员工姓名 ↑</option>
+                        <option value="name_desc">员工姓名 ↓</option>
+                        <option value="hours_asc">总工时 ↑</option>
+                        <option value="hours_desc">总工时 ↓</option>
+                        <option value="count_asc">记录数 ↑</option>
+                        <option value="count_desc">记录数 ↓</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <table id="statistics-table">
+                        <thead>
+                            <tr>
+                                <th>员工</th>
+                                <th>总工时</th>
+                                <th>记录数</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 员工弹窗 -->
+    <div id="employee-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="employee-modal-title">添加员工</h3>
+                <span class="close" onclick="closeEmployeeModal()">&times;</span>
+            </div>
+            <form id="employee-form" onsubmit="saveEmployee(event)">
+                <input type="hidden" id="employee-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>工号</label>
+                        <input type="text" id="employee-code" class="form-input" placeholder="请输入工号" required>
+                    </div>
+                    <div class="form-group">
+                        <label>姓名</label>
+                        <input type="text" id="employee-name" class="form-input" placeholder="请输入姓名" required>
+                    </div>
+                    <div class="form-group">
+                        <label>部门</label>
+                        <select id="employee-dept" class="form-select" required>
+                            <option value="">请选择部门</option>
+                            <option value="技术部">技术部</option>
+                            <option value="产品部">产品部</option>
+                            <option value="设计部">设计部</option>
+                            <option value="运营部">运营部</option>
+                            <option value="市场部">市场部</option>
+                            <option value="销售部">销售部</option>
+                            <option value="人事部">人事部</option>
+                            <option value="财务部">财务部</option>
+                            <option value="行政部">行政部</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEmployeeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 工时弹窗 -->
+    <div id="worktime-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="worktime-modal-title">添加工时记录</h3>
+                <span class="close" onclick="closeWorktimeModal()">&times;</span>
+            </div>
+            <form id="worktime-form" onsubmit="saveWorktime(event)">
+                <input type="hidden" id="worktime-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>员工</label>
+                        <select id="worktime-employee" class="form-select" required>
+                            <option value="">请选择员工</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>日期</label>
+                        <input type="date" id="worktime-date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>工时</label>
+                        <input type="number" id="worktime-hours" class="form-input" step="0.5" min="0" max="24" placeholder="请输入工时（0-24）" required>
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <textarea id="worktime-note" class="form-textarea" rows="3" placeholder="请输入备注（可选）"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeWorktimeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 批量录入弹窗 -->
+    <div id="batch-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>批量录入工时</h3>
+                <span class="close" onclick="closeBatchModal()">&times;</span>
+            </div>
+            <form id="batch-form" onsubmit="submitBatch(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="section-title">选择员工</label>
+                        <div id="batch-employees" class="checkbox-group"></div>
+                    </div>
+
+                    <div class="form-section date-section">
+                        <label class="section-label">📅 日期范围</label>
+                        <div class="date-range">
+                            <input type="date" id="batch-start-date" class="form-input" required>
+                            <span>至</span>
+                            <input type="date" id="batch-end-date" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <div class="form-section hours-section">
+                        <label class="section-label">⏰ 工时设置</label>
+                        <div class="hours-input-group">
+                            <input type="number" id="batch-hours" class="form-input" step="0.5" min="0" max="24" placeholder="请输入工时（0-24）" required>
+                            <span class="hours-unit">小时/天</span>
+                        </div>
+                        <textarea id="batch-note" class="form-textarea" rows="2" placeholder="请输入备注（可选）"></textarea>
+                    </div>
+
+                    <div class="form-section schedule-section">
+                        <label class="section-label">⏱️ 定时录入（可选）</label>
+                        <div class="schedule-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="enable-schedule" onchange="toggleSchedule()">
+                                启用定时录入
+                            </label>
+                            <div id="schedule-inputs" class="schedule-inputs" style="display: none;">
+                                <label>执行时间：</label>
+                                <input type="datetime-local" id="schedule-time" class="form-input">
+                                <p class="schedule-hint">⚠️ 页面必须保持打开，到时间后会自动执行</p>
+                            </div>
+                        </div>
+                        <div id="active-schedules" class="active-schedules"></div>
+                    </div>
+
+                    <div class="batch-info">
+                        <p>将为选中员工在 <span id="batch-preview-dates"></span> 期间每天录入 <span id="batch-preview-hours"></span> 小时</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeBatchModal()">取消</button>
+                    <button type="submit" class="btn btn-primary" id="batch-submit-btn">立即录入</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 单元格编辑弹窗 -->
+    <div id="cell-modal" class="modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3 id="cell-modal-title">编辑工时</h3>
+                <span class="close" onclick="closeCellModal()">&times;</span>
+            </div>
+            <form id="cell-form" onsubmit="saveCellData(event)">
+                <input type="hidden" id="cell-employee-id">
+                <input type="hidden" id="cell-date">
+                <input type="hidden" id="cell-worktime-id">
+                <div class="modal-body">
+                    <p id="cell-info" class="cell-info"></p>
+                    <div class="form-group">
+                        <label>工时</label>
+                        <input type="number" id="cell-hours" class="form-input" step="0.5" min="0" max="24" placeholder="请输入工时（0-24）">
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <textarea id="cell-note" class="form-textarea" rows="3" placeholder="请输入备注（可选）"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="deleteCellData()">删除</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeCellModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+// ==================== localStorage 数据操作 ====================
+
+const DB_KEYS = {
+    EMPLOYEES: 'worktime_employees',
+    WORKTIMES: 'worktime_worktimes'
+};
+
+// 生成唯一ID
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+// 获取数据
+function getData(key) {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : [];
+}
+
+// 保存数据
+function saveData(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+}
+
+// ==================== 工具函数 ====================
+
+function formatDate(date) {
+    const d = new Date(date);
+    return d.toISOString().split('T')[0];
+}
+
+// ==================== 路由导航 ====================
+
+const navLinks = document.querySelectorAll('.nav-link');
+const pages = document.querySelectorAll('.page');
+
+navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const pageName = link.dataset.page;
+
+        // 更新导航状态
+        navLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+
+        // 切换页面
+        pages.forEach(p => p.classList.remove('active'));
+        document.getElementById('page-' + pageName).classList.add('active');
+
+        // 加载页面数据
+        if (pageName === 'employees') loadEmployees();
+        if (pageName === 'worktimes') loadWorktimes();
+        if (pageName === 'statistics') {
+            loadEmployeeOptions();
+            loadStatistics();
+        }
+    });
+});
+
+// ==================== 员工管理 ====================
+
+let employees = [];
+
+function loadEmployees() {
+    employees = getData(DB_KEYS.EMPLOYEES);
+    renderEmployees();
+}
+
+function renderEmployees() {
+    const tbody = document.querySelector('#employees-table tbody');
+    if (employees.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">暂无数据</td></tr>';
+        return;
+    }
+    tbody.innerHTML = employees.map(emp => `
+        <tr>
+            <td>${emp.employee_id}</td>
+            <td>${emp.name}</td>
+            <td>${emp.department}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn-link" onclick="editEmployee('${emp.id}')">编辑</button>
+                    <button class="btn-link" onclick="deleteEmployee('${emp.id}')">删除</button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function showEmployeeModal(employee = null) {
+    const modal = document.getElementById('employee-modal');
+    const title = document.getElementById('employee-modal-title');
+    const form = document.getElementById('employee-form');
+
+    form.reset();
+    document.getElementById('employee-id').value = '';
+
+    if (employee) {
+        title.textContent = '编辑员工';
+        document.getElementById('employee-id').value = employee.id;
+        document.getElementById('employee-code').value = employee.employee_id;
+        document.getElementById('employee-name').value = employee.name;
+        document.getElementById('employee-dept').value = employee.department;
+    } else {
+        title.textContent = '添加员工';
+    }
+
+    modal.classList.add('show');
+}
+
+function closeEmployeeModal() {
+    document.getElementById('employee-modal').classList.remove('show');
+}
+
+function saveEmployee(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('employee-id').value;
+    const employeeData = {
+        employee_id: document.getElementById('employee-code').value,
+        name: document.getElementById('employee-name').value,
+        department: document.getElementById('employee-dept').value
+    };
+
+    // 检查工号是否重复
+    const exists = employees.some(emp =>
+        emp.employee_id === employeeData.employee_id && emp.id !== id
+    );
+    if (exists) {
+        alert('工号已存在');
+        return;
+    }
+
+    if (id) {
+        // 编辑
+        const index = employees.findIndex(e => e.id === id);
+        if (index !== -1) {
+            employees[index] = { ...employees[index], ...employeeData };
+        }
+    } else {
+        // 新增
+        employees.push({
+            id: generateId(),
+            ...employeeData
+        });
+    }
+
+    saveData(DB_KEYS.EMPLOYEES, employees);
+    closeEmployeeModal();
+    loadEmployees();
+}
+
+function editEmployee(id) {
+    const employee = employees.find(e => e.id === id);
+    if (employee) showEmployeeModal(employee);
+}
+
+function deleteEmployee(id) {
+    if (!confirm('确定要删除该员工吗？\n\n注意：该员工的工时记录将保留，但会显示为工号。')) return;
+
+    employees = employees.filter(e => e.id !== id);
+    saveData(DB_KEYS.EMPLOYEES, employees);
+    loadEmployees();
+}
+
+// ==================== 工时记录 ====================
+
+let worktimes = [];
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth() + 1; // 1-12
+
+function loadWorktimes() {
+    worktimes = getData(DB_KEYS.WORKTIMES);
+    initMonthSelectors();
+    renderCalendar();
+}
+
+// 初始化月份选择器
+function initMonthSelectors() {
+    const yearSelect = document.getElementById('year-select');
+    const monthSelect = document.getElementById('month-select');
+
+    // 生成年份选项（前后5年）
+    const currentYearNow = new Date().getFullYear();
+    let yearOptions = '';
+    for (let y = currentYearNow - 5; y <= currentYearNow + 5; y++) {
+        yearOptions += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}年</option>`;
+    }
+    yearSelect.innerHTML = yearOptions;
+
+    // 生成月份选项
+    let monthOptions = '';
+    for (let m = 1; m <= 12; m++) {
+        monthOptions += `<option value="${m}" ${m === currentMonth ? 'selected' : ''}>${m}月</option>`;
+    }
+    monthSelect.innerHTML = monthOptions;
+}
+
+// 渲染日历表格
+function renderCalendar() {
+    const headerRow = document.getElementById('calendar-header');
+    const tbody = document.getElementById('calendar-body');
+    const yearSelect = document.getElementById('year-select');
+    const monthSelect = document.getElementById('month-select');
+
+    // 同步选择器值
+    yearSelect.value = currentYear;
+    monthSelect.value = currentMonth;
+
+    // 获取当月天数
+    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+    // 渲染表头（姓名 + 1-31号 + 合计）
+    let headerHTML = '<th>姓名</th>';
+    for (let i = 1; i <= daysInMonth; i++) {
+        const date = new Date(currentYear, currentMonth - 1, i);
+        const dayOfWeek = date.getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        headerHTML += `<th class="${isWeekend ? 'weekend' : ''}">${i}</th>`;
+    }
+    headerHTML += '<th class="total-header">合计</th>';
+    headerRow.innerHTML = headerHTML;
+
+    // 获取员工列表
+    const employees = getData(DB_KEYS.EMPLOYEES);
+    if (employees.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="32" class="empty-state">请先添加员工</td></tr>';
+        return;
+    }
+
+    // 构建工时数据映射
+    const worktimeMap = {};
+    worktimes.forEach(wt => {
+        const key = `${wt.employee_id}_${wt.date}`;
+        worktimeMap[key] = wt;
+    });
+
+    // 渲染员工行
+    const bodyHTML = employees.map(emp => {
+        let rowHTML = `<td>${emp.name}</td>`;
+        let monthlyTotal = 0;
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const key = `${emp.employee_id}_${dateStr}`;
+            const wt = worktimeMap[key];
+            const date = new Date(currentYear, currentMonth - 1, day);
+            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+
+            const hasData = !!wt;
+            const hasNote = wt && wt.note && wt.note.trim() !== '';
+            const cellClass = hasData ? 'calendar-cell has-data' : 'calendar-cell';
+            const cellValue = hasData ? wt.work_hours : '';
+
+            // 累加当月工时
+            if (wt) {
+                monthlyTotal += wt.work_hours;
+            }
+
+            // 构建 tooltip 内容
+            let tooltipText = `${emp.name} - ${dateStr}`;
+            if (hasData) {
+                tooltipText += `\n工时：${wt.work_hours} 小时`;
+            }
+            if (hasNote) {
+                tooltipText += `\n备注：${wt.note}`;
+            }
+            tooltipText += '\n点击编辑';
+
+            // 备注标记
+            const noteMarker = hasNote ? '<span class="note-marker"></span>' : '';
+
+            rowHTML += `<td class="${cellClass} ${isWeekend ? 'weekend' : ''} ${hasNote ? 'has-note' : ''}"
+                           onclick="editCalendarCell('${emp.employee_id}', '${emp.name}', '${dateStr}', ${wt ? `'${wt.id}'` : 'null'})"
+                           title="${tooltipText}">
+                           ${cellValue}${noteMarker}
+                       </td>`;
+        }
+
+        // 添加合计列
+        rowHTML += `<td class="total-cell">${monthlyTotal}</td>`;
+
+        return `<tr>${rowHTML}</tr>`;
+    }).join('');
+
+    tbody.innerHTML = bodyHTML;
+}
+
+// 切换月份（前后按钮）
+function changeMonth(delta) {
+    currentMonth += delta;
+    if (currentMonth > 12) {
+        currentMonth = 1;
+        currentYear++;
+    } else if (currentMonth < 1) {
+        currentMonth = 12;
+        currentYear--;
+    }
+    renderCalendar();
+}
+
+// 选择年份
+function changeYear() {
+    currentYear = parseInt(document.getElementById('year-select').value);
+    renderCalendar();
+}
+
+// 选择月份
+function changeMonthSelect() {
+    currentMonth = parseInt(document.getElementById('month-select').value);
+    renderCalendar();
+}
+
+// 点击单元格编辑
+function editCalendarCell(employeeId, employeeName, date, worktimeId) {
+    const modal = document.getElementById('cell-modal');
+    const form = document.getElementById('cell-form');
+    const info = document.getElementById('cell-info');
+
+    form.reset();
+
+    // 设置隐藏字段
+    document.getElementById('cell-employee-id').value = employeeId;
+    document.getElementById('cell-date').value = date;
+    document.getElementById('cell-worktime-id').value = worktimeId || '';
+
+    // 显示信息
+    info.textContent = `${employeeName} - ${date}`;
+
+    // 如果有现有数据，填充表单
+    if (worktimeId) {
+        const worktime = worktimes.find(w => w.id === worktimeId);
+        if (worktime) {
+            document.getElementById('cell-hours').value = worktime.work_hours;
+            document.getElementById('cell-note').value = worktime.note || '';
+        }
+        document.getElementById('cell-modal-title').textContent = '编辑工时';
+    } else {
+        document.getElementById('cell-modal-title').textContent = '添加工时';
+    }
+
+    modal.classList.add('show');
+}
+
+// 关闭单元格弹窗
+function closeCellModal() {
+    document.getElementById('cell-modal').classList.remove('show');
+}
+
+// 保存单元格数据
+function saveCellData(e) {
+    e.preventDefault();
+
+    const employeeId = document.getElementById('cell-employee-id').value;
+    const date = document.getElementById('cell-date').value;
+    const worktimeId = document.getElementById('cell-worktime-id').value;
+    const hours = parseFloat(document.getElementById('cell-hours').value);
+    const note = document.getElementById('cell-note').value;
+
+    // 验证工时
+    if (isNaN(hours) || hours < 0 || hours > 24) {
+        alert('请输入0-24之间的工时数');
+        return;
+    }
+
+    if (worktimeId) {
+        // 更新记录
+        const index = worktimes.findIndex(w => w.id === worktimeId);
+        if (index !== -1) {
+            worktimes[index].work_hours = hours;
+            worktimes[index].note = note;
+            saveData(DB_KEYS.WORKTIMES, worktimes);
+        }
+    } else {
+        // 新增记录
+        worktimes.push({
+            id: generateId(),
+            employee_id: employeeId,
+            date: date,
+            work_hours: hours,
+            note: note
+        });
+        saveData(DB_KEYS.WORKTIMES, worktimes);
+    }
+
+    closeCellModal();
+    renderCalendar();
+}
+
+// 删除单元格数据
+function deleteCellData() {
+    const worktimeId = document.getElementById('cell-worktime-id').value;
+
+    if (!worktimeId) {
+        closeCellModal();
+        return;
+    }
+
+    if (!confirm('确定要删除这条记录吗？')) {
+        return;
+    }
+
+    worktimes = worktimes.filter(w => w.id !== worktimeId);
+    saveData(DB_KEYS.WORKTIMES, worktimes);
+
+    closeCellModal();
+    renderCalendar();
+}
+
+function showWorktimeModal(worktime = null) {
+    const modal = document.getElementById('worktime-modal');
+    const title = document.getElementById('worktime-modal-title');
+    const form = document.getElementById('worktime-form');
+
+    form.reset();
+    document.getElementById('worktime-id').value = '';
+
+    // 加载员工选项
+    loadEmployeeOptions('worktime-employee');
+
+    if (worktime) {
+        title.textContent = '编辑工时记录';
+        document.getElementById('worktime-id').value = worktime.id;
+        document.getElementById('worktime-employee').value = worktime.employee_id;
+        document.getElementById('worktime-date').value = worktime.date;
+        document.getElementById('worktime-hours').value = worktime.work_hours;
+        document.getElementById('worktime-note').value = worktime.note || '';
+    } else {
+        title.textContent = '添加工时记录';
+        document.getElementById('worktime-date').value = formatDate(new Date());
+    }
+
+    modal.classList.add('show');
+}
+
+function closeWorktimeModal() {
+    document.getElementById('worktime-modal').classList.remove('show');
+}
+
+function saveWorktime(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('worktime-id').value;
+    const worktimeData = {
+        employee_id: document.getElementById('worktime-employee').value,
+        date: document.getElementById('worktime-date').value,
+        work_hours: parseFloat(document.getElementById('worktime-hours').value),
+        note: document.getElementById('worktime-note').value
+    };
+
+    if (id) {
+        // 编辑
+        const index = worktimes.findIndex(w => w.id === id);
+        if (index !== -1) {
+            worktimes[index] = { ...worktimes[index], ...worktimeData };
+        }
+    } else {
+        // 新增
+        worktimes.push({
+            id: generateId(),
+            ...worktimeData
+        });
+    }
+
+    saveData(DB_KEYS.WORKTIMES, worktimes);
+    closeWorktimeModal();
+    loadWorktimes();
+}
+
+function editWorktime(id) {
+    const worktime = worktimes.find(w => w.id === id);
+    if (worktime) showWorktimeModal(worktime);
+}
+
+function deleteWorktime(id) {
+    if (!confirm('确定要删除该记录吗？')) return;
+
+    worktimes = worktimes.filter(w => w.id !== id);
+    saveData(DB_KEYS.WORKTIMES, worktimes);
+    loadWorktimes();
+}
+
+// ==================== 批量录入 ====================
+
+function showBatchModal() {
+    const modal = document.getElementById('batch-modal');
+    const form = document.getElementById('batch-form');
+
+    form.reset();
+
+    // 加载员工列表（复选框）
+    const employees = getData(DB_KEYS.EMPLOYEES);
+    const checkboxContainer = document.getElementById('batch-employees');
+
+    if (employees.length === 0) {
+        checkboxContainer.innerHTML = '<p style="color: #909399; padding: 8px;">暂无员工</p>';
+    } else {
+        checkboxContainer.innerHTML = `
+            <div class="checkbox-actions">
+                <button type="button" class="btn btn-sm btn-primary" onclick="toggleAllEmployees(true)">全选</button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="toggleAllEmployees(false)">全不选</button>
+            </div>
+            ${employees.map(emp => `
+                <div class="checkbox-item">
+                    <input type="checkbox" id="batch-emp-${emp.id}" value="${emp.employee_id}" checked>
+                    <label for="batch-emp-${emp.id}">${emp.name} (${emp.employee_id})</label>
+                </div>
+            `).join('')}
+        `;
+    }
+
+    // 设置默认日期范围（今天到当天）
+    const today = new Date();
+    document.getElementById('batch-start-date').value = formatDate(today);
+    document.getElementById('batch-end-date').value = formatDate(today);
+
+    // 更新预览
+    updateBatchPreview();
+
+    modal.classList.add('show');
+}
+
+function closeBatchModal() {
+    document.getElementById('batch-modal').classList.remove('show');
+}
+
+// 全选/全不选员工
+function toggleAllEmployees(checked) {
+    const checkboxes = document.querySelectorAll('#batch-employees input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+        cb.checked = checked;
+    });
+}
+
+function updateBatchPreview() {
+    const startDate = document.getElementById('batch-start-date').value;
+    const endDate = document.getElementById('batch-end-date').value;
+    const hours = document.getElementById('batch-hours').value;
+
+    const previewDates = document.getElementById('batch-preview-dates');
+    const previewHours = document.getElementById('batch-preview-hours');
+
+    if (startDate && endDate) {
+        previewDates.textContent = `${startDate} 至 ${endDate}`;
+    } else {
+        previewDates.textContent = '---';
+    }
+
+    previewHours.textContent = hours || '---';
+}
+
+// 监听输入变化更新预览
+document.addEventListener('DOMContentLoaded', function() {
+    const batchInputs = ['batch-start-date', 'batch-end-date', 'batch-hours'];
+    batchInputs.forEach(id => {
+        document.getElementById(id)?.addEventListener('input', updateBatchPreview);
+    });
+});
+
+function submitBatch(e) {
+    e.preventDefault();
+
+    // 检查是否启用定时录入
+    const enableSchedule = document.getElementById('enable-schedule').checked;
+
+    if (enableSchedule) {
+        // 定时录入
+        const scheduleTime = document.getElementById('schedule-time').value;
+        if (!scheduleTime) {
+            alert('请选择执行时间');
+            return;
+        }
+
+        const executeTime = new Date(scheduleTime);
+        const now = new Date();
+
+        if (executeTime <= now) {
+            alert('执行时间必须晚于当前时间');
+            return;
+        }
+
+        // 创建定时任务
+        createSchedule(executeTime);
+        return;
+    }
+
+    // 立即执行批量录入
+    executeBatchEntry();
+}
+
+// 执行批量录入
+function executeBatchEntry() {
+    // 获取选中的员工
+    const checkboxes = document.querySelectorAll('#batch-employees input[type="checkbox"]:checked');
+    const selectedEmployees = Array.from(checkboxes).map(cb => cb.value);
+
+    if (selectedEmployees.length === 0) {
+        alert('请至少选择一个员工');
+        return;
+    }
+
+    const startDate = document.getElementById('batch-start-date').value;
+    const endDate = document.getElementById('batch-end-date').value;
+    const hours = parseFloat(document.getElementById('batch-hours').value);
+    const note = document.getElementById('batch-note').value;
+
+    // 验证日期
+    if (startDate > endDate) {
+        alert('开始日期不能晚于结束日期');
+        return;
+    }
+
+    // 验证工时
+    if (isNaN(hours) || hours < 0 || hours > 24) {
+        alert('请输入0-24之间的工时数');
+        return;
+    }
+
+    // 计算日期范围内的所有日期
+    const dates = [];
+    let current = new Date(startDate);
+    const end = new Date(endDate);
+
+    while (current <= end) {
+        dates.push(formatDate(current));
+        current.setDate(current.getDate() + 1);
+    }
+
+    // 确认
+    const totalCount = selectedEmployees.length * dates.length;
+    if (!confirm(`将为 ${selectedEmployees.length} 个员工在 ${dates.length} 天内录入工时\n共 ${totalCount} 条记录，确定继续吗？`)) {
+        return;
+    }
+
+    // 获取现有数据
+    worktimes = getData(DB_KEYS.WORKTIMES);
+
+    // 批量添加
+    let addCount = 0;
+    let updateCount = 0;
+
+    selectedEmployees.forEach(empId => {
+        dates.forEach(date => {
+            const key = `${empId}_${date}`;
+            const existing = worktimes.find(w => `${w.employee_id}_${w.date}` === key);
+
+            if (existing) {
+                // 更新现有记录
+                existing.work_hours = hours;
+                existing.note = note;
+                updateCount++;
+            } else {
+                // 新增记录
+                worktimes.push({
+                    id: generateId(),
+                    employee_id: empId,
+                    date: date,
+                    work_hours: hours,
+                    note: note
+                });
+                addCount++;
+            }
+        });
+    });
+
+    // 保存数据
+    saveData(DB_KEYS.WORKTIMES, worktimes);
+
+    // 关闭弹窗并刷新
+    closeBatchModal();
+    renderCalendar();
+
+    // 显示结果
+    alert(`批量录入完成！\n新增：${addCount} 条\n更新：${updateCount} 条`);
+}
+
+// 定时任务管理器
+const scheduleManager = {
+    tasks: [],
+    taskIdCounter: 0,
+
+    add(task) {
+        const id = ++this.taskIdCounter;
+        task.id = id;
+        this.tasks.push(task);
+        this.renderTasks();
+        this.startCountdown(task);
+        return id;
+    },
+
+    remove(id) {
+        const index = this.tasks.findIndex(t => t.id === id);
+        if (index !== -1) {
+            clearTimeout(this.tasks[index].timerId);
+            clearInterval(this.tasks[index].intervalId);
+            this.tasks.splice(index, 1);
+            this.renderTasks();
+        }
+    },
+
+    execute(task) {
+        // 设置表单数据并执行
+        document.getElementById('batch-start-date').value = task.startDate;
+        document.getElementById('batch-end-date').value = task.endDate;
+        document.getElementById('batch-hours').value = task.hours;
+        document.getElementById('batch-note').value = task.note || '';
+
+        // 重新选中员工
+        const checkboxes = document.querySelectorAll('#batch-employees input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.checked = task.employees.includes(cb.value);
+        });
+
+        // 执行录入
+        executeBatchEntry();
+
+        // 播放提示音
+        this.playNotificationSound();
+
+        // 移除任务
+        this.remove(task.id);
+    },
+
+    startCountdown(task) {
+        // 设置定时器
+        const delay = task.executeTime - new Date();
+        task.timerId = setTimeout(() => {
+            this.execute(task);
+        }, delay);
+
+        // 更新倒计时显示
+        task.intervalId = setInterval(() => {
+            this.renderTasks();
+        }, 1000);
+    },
+
+    renderTasks() {
+        const container = document.getElementById('active-schedules');
+        if (this.tasks.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        container.innerHTML = this.tasks.map(task => {
+            const now = new Date();
+            const diff = task.executeTime - now;
+
+            if (diff <= 0) return '';
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            return `
+                <div class="schedule-item">
+                    <div class="schedule-item-header">
+                        <span class="schedule-item-time">⏰ ${task.executeTime.toLocaleString('zh-CN')}</span>
+                        <button class="schedule-cancel" onclick="scheduleManager.remove(${task.id})">取消</button>
+                    </div>
+                    <div class="schedule-item-countdown">倒计时：${hours}时 ${minutes}分 ${seconds}秒</div>
+                    <div class="schedule-item-info">
+                        ${task.employees.length} 个员工 × ${task.dayCount} 天 × ${task.hours} 小时
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    playNotificationSound() {
+        // 创建音频提示
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+    }
+};
+
+// 切换定时选项显示
+function toggleSchedule() {
+    const enableSchedule = document.getElementById('enable-schedule').checked;
+    const scheduleInputs = document.getElementById('schedule-inputs');
+    const submitBtn = document.getElementById('batch-submit-btn');
+
+    if (enableSchedule) {
+        scheduleInputs.style.display = 'block';
+        submitBtn.textContent = '设置定时任务';
+    } else {
+        scheduleInputs.style.display = 'none';
+        submitBtn.textContent = '立即录入';
+    }
+}
+
+// 创建定时任务
+function createSchedule(executeTime) {
+    const checkboxes = document.querySelectorAll('#batch-employees input[type="checkbox"]:checked');
+    const selectedEmployees = Array.from(checkboxes).map(cb => cb.value);
+
+    const startDate = document.getElementById('batch-start-date').value;
+    const endDate = document.getElementById('batch-end-date').value;
+    const hours = parseFloat(document.getElementById('batch-hours').value);
+    const note = document.getElementById('batch-note').value;
+
+    // 验证
+    if (selectedEmployees.length === 0) {
+        alert('请至少选择一个员工');
+        return;
+    }
+
+    if (startDate > endDate) {
+        alert('开始日期不能晚于结束日期');
+        return;
+    }
+
+    if (isNaN(hours) || hours < 0 || hours > 24) {
+        alert('请输入0-24之间的工时数');
+        return;
+    }
+
+    // 计算天数
+    const dayCount = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
+
+    // 创建任务
+    scheduleManager.add({
+        employees: selectedEmployees,
+        startDate: startDate,
+        endDate: endDate,
+        dayCount: dayCount,
+        hours: hours,
+        note: note,
+        executeTime: executeTime
+    });
+
+    // 重置表单
+    document.getElementById('batch-form').reset();
+    document.getElementById('schedule-inputs').style.display = 'none';
+    document.getElementById('batch-submit-btn').textContent = '立即录入';
+
+    // 重新加载员工列表
+    const employees = getData(DB_KEYS.EMPLOYEES);
+    const checkboxContainer = document.getElementById('batch-employees');
+    checkboxContainer.innerHTML = `
+        <div class="checkbox-actions">
+            <button type="button" class="btn btn-sm btn-primary" onclick="toggleAllEmployees(true)">全选</button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="toggleAllEmployees(false)">全不选</button>
+        </div>
+        ${employees.map(emp => `
+            <div class="checkbox-item">
+                <input type="checkbox" id="batch-emp-${emp.id}" value="${emp.employee_id}" checked>
+                <label for="batch-emp-${emp.id}">${emp.name} (${emp.employee_id})</label>
+            </div>
+        `).join('')}
+    `;
+
+    alert(`定时任务已设置！\n将在 ${executeTime.toLocaleString('zh-CN')} 自动执行\n请保持页面打开`);
+}
+
+// ==================== 统计报表 ====================
+
+function loadEmployeeOptions(selectId = 'stats-employee') {
+    const data = getData(DB_KEYS.EMPLOYEES);
+    const select = document.getElementById(selectId);
+    const currentValue = select.value;
+
+    const options = data.map(emp =>
+        `<option value="${emp.employee_id}">${emp.name} (${emp.employee_id})</option>`
+    ).join('');
+
+    select.innerHTML = '<option value="">全部员工</option>' + options;
+    select.value = currentValue;
+
+    // 初始化统计报表事件监听器（如果尚未初始化）
+    initStatisticsEventListeners();
+}
+
+function initStatisticsEventListeners() {
+    // 为所有筛选器添加change事件监听器
+    const employeeSelect = document.getElementById('stats-employee');
+    const startDateInput = document.getElementById('stats-start');
+    const endDateInput = document.getElementById('stats-end');
+    const sortSelect = document.getElementById('stats-sort');
+
+    // 移除可能存在的旧监听器
+    if (employeeSelect) {
+        employeeSelect.removeEventListener('change', loadStatistics);
+        employeeSelect.addEventListener('change', loadStatistics);
+    }
+    if (startDateInput) {
+        startDateInput.removeEventListener('change', loadStatistics);
+        startDateInput.addEventListener('change', loadStatistics);
+    }
+    if (endDateInput) {
+        endDateInput.removeEventListener('change', loadStatistics);
+        endDateInput.addEventListener('change', loadStatistics);
+    }
+    if (sortSelect) {
+        sortSelect.removeEventListener('change', loadStatistics);
+        sortSelect.addEventListener('change', loadStatistics);
+    }
+}
+
+function loadStatistics() {
+    const employeeId = document.getElementById('stats-employee').value;
+    const startDate = document.getElementById('stats-start').value;
+    const endDate = document.getElementById('stats-end').value;
+
+    const allWorktimes = getData(DB_KEYS.WORKTIMES);
+    const allEmployees = getData(DB_KEYS.EMPLOYEES);
+
+    // 创建员工映射
+    const empMap = {};
+    allEmployees.forEach(e => empMap[e.employee_id] = e.name);
+
+    // 筛选数据
+    let filtered = allWorktimes;
+
+    if (employeeId) {
+        filtered = filtered.filter(w => w.employee_id === employeeId);
+    }
+
+    if (startDate) {
+        filtered = filtered.filter(w => w.date >= startDate);
+    }
+
+    if (endDate) {
+        filtered = filtered.filter(w => w.date <= endDate);
+    }
+
+    // 按员工统计
+    const stats = {};
+    filtered.forEach(wt => {
+        if (!stats[wt.employee_id]) {
+            stats[wt.employee_id] = {
+                name: empMap[wt.employee_id] || wt.employee_id,
+                total_hours: 0,
+                record_count: 0
+            };
+        }
+        stats[wt.employee_id].total_hours += wt.work_hours;
+        stats[wt.employee_id].record_count++;
+    });
+
+    // 如果没有选择特定员工，显示所有员工（包括没有记录的）
+    if (!employeeId) {
+        allEmployees.forEach(emp => {
+            if (!stats[emp.employee_id]) {
+                stats[emp.employee_id] = {
+                    name: emp.name,
+                    total_hours: 0,
+                    record_count: 0
+                };
+            }
+        });
+    }
+
+    let data = Object.values(stats);
+
+    // 获取排序选项
+    const sortOption = document.getElementById('stats-sort').value;
+
+    // 根据排序选项排序
+    data.sort((a, b) => {
+        switch (sortOption) {
+            case 'name_asc':
+                return a.name.localeCompare(b.name);
+            case 'name_desc':
+                return b.name.localeCompare(a.name);
+            case 'hours_asc':
+                return a.total_hours - b.total_hours;
+            case 'hours_desc':
+                return b.total_hours - a.total_hours;
+            case 'count_asc':
+                return a.record_count - b.record_count;
+            case 'count_desc':
+                return b.record_count - a.record_count;
+            default:
+                return 0;
+        }
+    });
+
+    renderStatistics(data);
+}
+
+function renderStatistics(data) {
+    const tbody = document.querySelector('#statistics-table tbody');
+
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty-state">暂无数据</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = data.map(item => `
+        <tr>
+            <td>${item.name}</td>
+            <td>${item.total_hours} 小时</td>
+            <td>${item.record_count} 条</td>
+        </tr>
+    `).join('');
+}
+
+// ==================== 数据管理 ====================
+
+// 导出数据
+function exportData() {
+    const data = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        employees: getData(DB_KEYS.EMPLOYEES),
+        worktimes: getData(DB_KEYS.WORKTIMES)
+    };
+
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `工时数据_${formatDate(new Date())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    alert('数据导出成功！');
+}
+
+// 导入数据
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+
+            // 验证数据格式
+            if (!data.employees || !data.worktimes) {
+                alert('数据格式不正确！');
+                return;
+            }
+
+            // 确认导入
+            const msg = `找到 ${data.employees.length} 个员工，${data.worktimes.length} 条工时记录\n\n确定要导入吗？（将覆盖现有数据）`;
+            if (!confirm(msg)) return;
+
+            // 保存数据
+            saveData(DB_KEYS.EMPLOYEES, data.employees);
+            saveData(DB_KEYS.WORKTIMES, data.worktimes);
+
+            // 刷新当前页面
+            loadEmployees();
+            alert('数据导入成功！');
+        } catch (err) {
+            alert('导入失败：文件格式错误');
+        }
+    };
+    reader.readAsText(file);
+
+    // 清空文件选择
+    event.target.value = '';
+}
+
+// 清除数据
+function clearData() {
+    if (!confirm('确定要清除所有数据吗？此操作不可恢复！')) return;
+    if (!confirm('再次确认：真的要删除所有员工和工时记录吗？')) return;
+
+    localStorage.removeItem(DB_KEYS.EMPLOYEES);
+    localStorage.removeItem(DB_KEYS.WORKTIMES);
+
+    employees = [];
+    worktimes = [];
+    loadEmployees();
+    alert('数据已清除');
+}
+
+// ==================== 初始化 ====================
+
+// 默认加载员工列表
+loadEmployees();
+
+// 初始化统计报表事件监听器
+initStatisticsEventListeners();
+    </script>
+</body>
+</html>

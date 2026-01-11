@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>电缆装盘长度计算器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            -webkit-appearance: none;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-calculate {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+
+        .btn-calculate:active {
+            transform: scale(0.98);
+        }
+
+        .results {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .result-value {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        /* 适配桌面 */
+        @media (min-width: 768px) {
+            .container {
+                padding: 35px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📏 电缆装盘长度计算器</h1>
+
+        <div class="input-group">
+            <label for="d1">侧板直径 (d₁)</label>
+            <input type="number" id="d1" value="2000" step="0.1" placeholder="请输入">
+        </div>
+
+        <div class="input-group">
+            <label for="d2">筒体直径 (d₂)</label>
+            <input type="number" id="d2" value="1000" step="0.1" placeholder="请输入">
+        </div>
+
+        <div class="input-group">
+            <label for="l2">内宽 (l₂)</label>
+            <input type="number" id="l2" value="500" step="0.1" placeholder="请输入">
+        </div>
+
+        <div class="input-group">
+            <label for="D">线缆外径 (D)</label>
+            <input type="number" id="D" value="50" step="0.1" placeholder="请输入">
+        </div>
+
+        <div class="input-group">
+            <label for="t">装盘余量 (t)</label>
+            <input type="number" id="t" value="0" step="0.1" placeholder="可以为0">
+        </div>
+
+        <button class="btn-calculate" onclick="calculate()">🧮 计算</button>
+
+        <div class="error" id="error"></div>
+
+        <div class="results" id="results" style="display: none;">
+            <div class="result-item">
+                <span class="result-label">卷缆层数 (P)</span>
+                <span class="result-value" id="resultP">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">每层圈数 (n)</span>
+                <span class="result-value" id="resultN">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">装盘长度 (L)</span>
+                <span class="result-value" id="resultL">-</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+            document.getElementById('results').style.display = 'none';
+        }
+
+        function hideError() {
+            document.getElementById('error').classList.remove('show');
+        }
+
+        function calculate() {
+            hideError();
+
+            // 获取输入值
+            const d1 = parseFloat(document.getElementById('d1').value);
+            const d2 = parseFloat(document.getElementById('d2').value);
+            const l2 = parseFloat(document.getElementById('l2').value);
+            const D = parseFloat(document.getElementById('D').value);
+            const t = parseFloat(document.getElementById('t').value);
+
+            // 验证输入
+            if (isNaN(d1) || isNaN(d2) || isNaN(l2) || isNaN(D) || isNaN(t)) {
+                showError('请填写所有参数');
+                return;
+            }
+
+            if (d1 <= 0 || d2 <= 0 || l2 <= 0 || D <= 0) {
+                showError('d₁、d₂、l₂、D 必须为正数');
+                return;
+            }
+
+            if (t < 0) {
+                showError('装盘余量不能为负数');
+                return;
+            }
+
+            if (d1 <= d2) {
+                showError('侧板直径(d₁)必须大于筒体直径(d₂)');
+                return;
+            }
+
+            // 计算卷缆层数 P
+            const P_numerator = d1 - d2 - 2 * t - 0.2 * D;
+            if (P_numerator < 0) {
+                showError('有效空间不足，无法缠绕电缆');
+                return;
+            }
+            const P = P_numerator / (1.8 * D);
+            if (P <= 0) {
+                showError('无法缠绕至少一层电缆');
+                return;
+            }
+
+            // 计算每层圈数 n
+            const n = 0.95 * l2 / D;
+
+            // 计算总长度 L（P和n向下取整）
+            const P_floor = Math.floor(P);
+            const n_floor = Math.floor(n);
+            const avg_diameter = d2 + 0.1 * D + 0.9 * D * P_floor;
+            const L = (Math.PI * P_floor * n_floor * avg_diameter) / 1000;
+
+            // 显示结果
+            document.getElementById('resultP').textContent = P.toFixed(1) + ' 层';
+            document.getElementById('resultN').textContent = n.toFixed(1) + ' 圈';
+            document.getElementById('resultL').textContent = L.toFixed(2) + ' 米';
+            document.getElementById('results').style.display = 'block';
+        }
+
+        // 支持回车键计算
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    calculate();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
